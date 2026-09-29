@@ -1,0 +1,292 @@
+{
+ "sources": [
+  {
+   "id": "s1",
+   "url": "https://openalex.org/W7133224126",
+   "title": "Chain-Of-Thought Prompting Elicits Reasoning in Large Language Models",
+   "date": "2022-01-01",
+   "doi": "10.52202/068431-1800",
+   "text": ""
+  },
+  {
+   "id": "s2",
+   "url": "https://openalex.org/W4221161695",
+   "title": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+   "date": "2022-03-21",
+   "doi": "10.48550/arxiv.2203.11171",
+   "text": "Chain-of-thought prompting combined with pre-trained large language models has achieved encouraging results on complex reasoning tasks. In this paper, we propose a new decoding strategy, self-consistency, to replace the naive greedy decoding used in chain-of-thought prompting. It first samples a diverse set of reasoning paths instead of only taking the greedy one, and then selects the most consistent answer by marginalizing out the sampled reasoning paths. Self-consistency leverages the intuition that a complex reasoning problem typically admits multiple different ways of thinking leading to its unique correct answer. Our extensive empirical evaluation shows that self-consistency boosts the performance of chain-of-thought prompting with a striking margin on a range of popular arithmetic and commonsense reasoning benchmarks, including GSM8K (+17.9%), SVAMP (+11.0%), AQuA (+12.2%), StrategyQA (+6.4%) and ARC-challenge (+3.9%)."
+  },
+  {
+   "id": "s3",
+   "url": "https://openalex.org/W3210904070",
+   "title": "Training Verifiers to Solve Math Word Problems",
+   "date": "2021-10-27",
+   "doi": "10.48550/arxiv.2110.14168",
+   "text": "State-of-the-art language models can match human performance on many tasks, but they still struggle to robustly perform multi-step mathematical reasoning. To diagnose the failures of current models and support research, we introduce GSM8K, a dataset of 8.5K high quality linguistically diverse grade school math word problems. We find that even the largest transformer models fail to achieve high test performance, despite the conceptual simplicity of this problem distribution. To increase performance, we propose training verifiers to judge the correctness of model completions. At test time, we generate many candidate solutions and select the one ranked highest by the verifier. We demonstrate that verification significantly improves performance on GSM8K, and we provide strong empirical evidence that verification scales more effectively with increased data than a finetuning baseline."
+  },
+  {
+   "id": "s4",
+   "url": "https://openalex.org/W3134642945",
+   "title": "Measuring Mathematical Problem Solving With the MATH Dataset",
+   "date": "2021-03-05",
+   "doi": "10.48550/arxiv.2103.03874",
+   "text": "Many intellectual endeavors require mathematical problem solving, but this skill remains beyond the capabilities of computers. To measure this ability in machine learning models, we introduce MATH, a new dataset of 12,500 challenging competition mathematics problems. Each problem in MATH has a full step-by-step solution which can be used to teach models to generate answer derivations and explanations. To facilitate future research and increase accuracy on MATH, we also contribute a large auxiliary pretraining dataset which helps teach models the fundamentals of mathematics. Even though we are able to increase accuracy on MATH, our results show that accuracy remains relatively low, even with enormous Transformer models. Moreover, we find that simply increasing budgets and model parameter counts will be impractical for achieving strong mathematical reasoning if scaling trends continue. While scaling Transformers is automatically solving most other text-based tasks, scaling is not currently solving MATH. To have more traction on mathematical problem solving we will likely need new algorithmic advancements from the broader research community."
+  },
+  {
+   "id": "s5",
+   "url": "https://openalex.org/W4309953112",
+   "title": "Program of Thoughts Prompting: Disentangling Computation from Reasoning for Numerical Reasoning Tasks",
+   "date": "2022-11-22",
+   "doi": "10.48550/arxiv.2211.12588",
+   "text": "Recently, there has been significant progress in teaching language models to perform step-by-step reasoning to solve complex numerical reasoning tasks. Chain-of-thoughts prompting (CoT) is by far the state-of-art method for these tasks. CoT uses language models to perform both reasoning and computation in the multi-step `thought' process. To disentangle computation from reasoning, we propose `Program of Thoughts' (PoT), which uses language models (mainly Codex) to express the reasoning process as a program. The computation is relegated to an external computer, which executes the generated programs to derive the answer. We evaluate PoT on five math word problem datasets (GSM, AQuA, SVAMP, TabMWP, MultiArith) and three financial-QA datasets (FinQA, ConvFinQA, TATQA) for both few-shot and zero-shot setups. Under both few-shot and zero-shot settings, PoT can show an average performance gain over CoT by around 12\\% across all the evaluated datasets. By combining PoT with self-consistency decoding, we can achieve SoTA performance on all math problem datasets and near-SoTA performance on financial datasets. All of our data and code are released in Github https://github.com/wenhuchen/Program-of-Thoughts"
+  },
+  {
+   "id": "s6",
+   "url": "https://openalex.org/W4309591663",
+   "title": "PAL: Program-aided Language Models",
+   "date": "2022-11-18",
+   "doi": "10.48550/arxiv.2211.10435",
+   "text": "Large language models (LLMs) have recently demonstrated an impressive ability to perform arithmetic and symbolic reasoning tasks, when provided with a few examples at test time (\"few-shot prompting\"). Much of this success can be attributed to prompting methods such as \"chain-of-thought'', which employ LLMs for both understanding the problem description by decomposing it into steps, as well as solving each step of the problem. While LLMs seem to be adept at this sort of step-by-step decomposition, LLMs often make logical and arithmetic mistakes in the solution part, even when the problem is decomposed correctly. In this paper, we present Program-Aided Language models (PAL): a novel approach that uses the LLM to read natural language problems and generate programs as the intermediate reasoning steps, but offloads the solution step to a runtime such as a Python interpreter. With PAL, decomposing the natural language problem into runnable steps remains the only learning task for the LLM, while solving is delegated to the interpreter. We demonstrate this synergy between a neural LLM and a symbolic interpreter across 13 mathematical, symbolic, and algorithmic reasoning tasks from BIG-Bench Hard and other benchmarks. In all these natural language reasoning tasks, generating code using an LLM and reasoning using a Python interpreter leads to more accurate results than much larger models. For example, PAL using Codex achieves state-of-the-art few-shot accuracy on the GSM8K benchmark of math word problems, surpassing PaLM-540B which uses chain-of-thought by absolute 15% top-1. Our code and data are publicly available at http://reasonwithpal.com/ ."
+  },
+  {
+   "id": "s7",
+   "url": "https://openalex.org/W4320165837",
+   "title": "Toolformer: Language Models Can Teach Themselves to Use Tools",
+   "date": "2023-02-09",
+   "doi": "10.48550/arxiv.2302.04761",
+   "text": "Language models (LMs) exhibit remarkable abilities to solve new tasks from just a few examples or textual instructions, especially at scale. They also, paradoxically, struggle with basic functionality, such as arithmetic or factual lookup, where much simpler and smaller models excel. In this paper, we show that LMs can teach themselves to use external tools via simple APIs and achieve the best of both worlds. We introduce Toolformer, a model trained to decide which APIs to call, when to call them, what arguments to pass, and how to best incorporate the results into future token prediction. This is done in a self-supervised way, requiring nothing more than a handful of demonstrations for each API. We incorporate a range of tools, including a calculator, a Q\\&A system, two different search engines, a translation system, and a calendar. Toolformer achieves substantially improved zero-shot performance across a variety of downstream tasks, often competitive with much larger models, without sacrificing its core language modeling abilities."
+  },
+  {
+   "id": "s8",
+   "url": "https://openalex.org/W3178506813",
+   "title": "The Lean 4 Theorem Prover and Programming Language",
+   "date": "2021-01-01",
+   "doi": "10.1007/978-3-030-79876-5_37",
+   "text": "Abstract Lean 4 is a reimplementation of the Lean interactive theorem prover (ITP) in Lean itself. It addresses many shortcomings of the previous versions and contains many new features. Lean 4 is fully extensible: users can modify and extend the parser, elaborator, tactics, decision procedures, pretty printer, and code generator. The new system has a hygienic macro system custom-built for ITPs. It contains a new typeclass resolution procedure based on tabled resolution, addressing significant performance problems reported by the growing user base. Lean 4 is also an efficient functional programming language based on a novel programming paradigm called functional but in-place . Efficient code generation is crucial for Lean users because many write custom proof automation procedures in Lean itself."
+  },
+  {
+   "id": "s9",
+   "url": "https://openalex.org/W4382498654",
+   "title": "LeanDojo: Theorem Proving with Retrieval-Augmented Language Models",
+   "date": "2023-06-27",
+   "doi": "10.48550/arxiv.2306.15626",
+   "text": "Large language models (LLMs) have shown promise in proving formal theorems using proof assistants such as Lean. However, existing methods are difficult to reproduce or build on, due to private code, data, and large compute requirements. This has created substantial barriers to research on machine learning methods for theorem proving. This paper removes these barriers by introducing LeanDojo: an open-source Lean playground consisting of toolkits, data, models, and benchmarks. LeanDojo extracts data from Lean and enables interaction with the proof environment programmatically. It contains fine-grained annotations of premises in proofs, providing valuable data for premise selection: a key bottleneck in theorem proving. Using this data, we develop ReProver (Retrieval-Augmented Prover): an LLM-based prover augmented with retrieval for selecting premises from a vast math library. It is inexpensive and needs only one GPU week of training. Our retriever leverages LeanDojo's program analysis capability to identify accessible premises and hard negative examples, which makes retrieval much more effective. Furthermore, we construct a new benchmark consisting of 98,734 theorems and proofs extracted from Lean's math library. It features challenging data split requiring the prover to generalize to theorems relying on novel premises that are never used in training. We use this benchmark for training and evaluation, and experimental results demonstrate the effectiveness of ReProver over non-retrieval baselines and GPT-4. We thus provide the first set of open-source LLM-based theorem provers without any proprietary datasets and release it under a permissive MIT license to facilitate further research."
+  },
+  {
+   "id": "s10",
+   "url": "https://openalex.org/W1480909796",
+   "title": "Z3: An Efficient SMT Solver",
+   "date": "2008-01-01",
+   "doi": "10.1007/978-3-540-78800-3_24",
+   "text": ""
+  },
+  {
+   "id": "s11",
+   "url": "https://openalex.org/W4389519818",
+   "title": "Logic-LM: Empowering Large Language Models with Symbolic Solvers for Faithful Logical Reasoning",
+   "date": "2023-01-01",
+   "doi": "10.18653/v1/2023.findings-emnlp.248",
+   "text": "Large Language Models (LLMs) have shown human-like reasoning abilities but still struggle with complex logical problems.This paper introduces a novel framework, LOGIC-LM, which integrates LLMs with symbolic solvers to improve logical problem-solving.Our method first utilizes LLMs to translate a natural language problem into a symbolic formulation.Afterward, a deterministic symbolic solver performs inference on the formulated problem.We also introduce a selfrefinement module, which utilizes the symbolic solver's error messages to revise symbolic formalizations.We demonstrate LOGIC-LM's effectiveness on five logical reasoning datasets: ProofWriter, PrOntoQA, FOLIO, LogicalDeduction, and AR-LSAT.On average, LOGIC-LM achieves a significant performance boost of 39.2% over using LLM alone with standard prompting and 18.4% over LLM with chain-ofthought prompting.Our findings suggest that LOGIC-LM, by combining LLMs with symbolic logic, offers a promising avenue for faithful logical reasoning."
+  },
+  {
+   "id": "s12",
+   "url": "https://openalex.org/W4322718191",
+   "title": "LLaMA: Open and Efficient Foundation Language Models",
+   "date": "2023-02-27",
+   "doi": "10.48550/arxiv.2302.13971",
+   "text": "We introduce LLaMA, a collection of foundation language models ranging from 7B to 65B parameters. We train our models on trillions of tokens, and show that it is possible to train state-of-the-art models using publicly available datasets exclusively, without resorting to proprietary and inaccessible datasets. In particular, LLaMA-13B outperforms GPT-3 (175B) on most benchmarks, and LLaMA-65B is competitive with the best models, Chinchilla-70B and PaLM-540B. We release all our models to the research community."
+  },
+  {
+   "id": "s13",
+   "url": "https://openalex.org/W4379089709",
+   "title": "Let's Verify Step by Step",
+   "date": "2023-05-31",
+   "doi": "10.48550/arxiv.2305.20050",
+   "text": "In recent years, large language models have greatly improved in their ability to perform complex multi-step reasoning. However, even state-of-the-art models still regularly produce logical mistakes. To train more reliable models, we can turn either to outcome supervision, which provides feedback for a final result, or process supervision, which provides feedback for each intermediate reasoning step. Given the importance of training reliable models, and given the high cost of human feedback, it is important to carefully compare the both methods. Recent work has already begun this comparison, but many questions still remain. We conduct our own investigation, finding that process supervision significantly outperforms outcome supervision for training models to solve problems from the challenging MATH dataset. Our process-supervised model solves 78% of problems from a representative subset of the MATH test set. Additionally, we show that active learning significantly improves the efficacy of process supervision. To support related research, we also release PRM800K, the complete dataset of 800,000 step-level human feedback labels used to train our best reward model."
+  },
+  {
+   "id": "s14",
+   "url": "https://openalex.org/W4282045675",
+   "title": "Autoformalization with Large Language Models",
+   "date": "2022-05-25",
+   "doi": "10.48550/arxiv.2205.12615",
+   "text": "Autoformalization is the process of automatically translating from natural language mathematics to formal specifications and proofs. A successful autoformalization system could advance the fields of formal verification, program synthesis, and artificial intelligence. While the long-term goal of autoformalization seemed elusive for a long time, we show large language models provide new prospects towards this goal. We make the surprising observation that LLMs can correctly translate a significant portion ($25.3\\%$) of mathematical competition problems perfectly to formal specifications in Isabelle/HOL. We demonstrate the usefulness of this process by improving a previously introduced neural theorem prover via training on these autoformalized theorems. Our methodology results in a new state-of-the-art result on the MiniF2F theorem proving benchmark, improving the proof rate from $29.6\\%$ to $35.2\\%$."
+  },
+  {
+   "id": "s15",
+   "url": "https://openalex.org/W4391493576",
+   "title": "From statistical relational to neurosymbolic artificial intelligence: A survey",
+   "date": "2024-01-09",
+   "doi": "10.1016/j.artint.2023.104062",
+   "text": "This survey explores the integration of learning and reasoning in two different fields of artificial intelligence: neurosymbolic and statistical relational artificial intelligence. Neurosymbolic artificial intelligence (NeSy) studies the integration of symbolic reasoning and neural networks, while statistical relational artificial intelligence (StarAI) focuses on integrating logic with probabilistic graphical models. This survey identifies seven shared dimensions between these two subfields of AI. These dimensions can be used to characterize different NeSy and StarAI systems. They are concerned with (1) the approach to logical inference, whether model or proof-based; (2) the syntax of the used logical theories; (3) the logical semantics of the systems and their extensions to facilitate learning; (4) the scope of learning, encompassing either parameter or structure learning; (5) the presence of symbolic and subsymbolic representations; (6) the degree to which systems capture the original logic, probabilistic, and neural paradigms; and (7) the classes of learning tasks the systems are applied to. By positioning various NeSy and StarAI systems along these dimensions and pointing out similarities and differences between them, this survey contributes fundamental concepts for understanding the integration of learning and reasoning."
+  },
+  {
+   "id": "s16",
+   "url": "https://openalex.org/W2133629640",
+   "title": "Observational equality, now!",
+   "date": "2007-10-02",
+   "doi": "10.1145/1292597.1292608",
+   "text": "This paper has something new and positive to say about propositional equality in programming and proof systems based on the Curry-Howard correspondence between propositions and types. We have found a way to present a propositional equality type"
+  }
+ ],
+ "claims": [
+  {
+   "text": "思维链提示通过让模型显式输出中间推理步骤，显著提升了大语言模型的复杂推理能力（Wei 等, 2022）。",
+   "citations": [
+    {
+     "source": "s1",
+     "doi": "10.52202/068431-1800"
+    }
+   ]
+  },
+  {
+   "text": "自一致性在思维链基础上对多条推理路径做边际化投票，进一步提升复杂推理任务的准确率（Wang 等, 2022）。",
+   "citations": [
+    {
+     "source": "s2",
+     "doi": "10.48550/arxiv.2203.11171",
+     "quote": "Chain-of-thought prompting combined with pre-trained large language models has achieved encouraging results on complex reasoning tasks."
+    }
+   ]
+  },
+  {
+   "text": "GSM8K 基准表明，即便模型在许多任务上达到人类水平，其多步数学文字题推理仍不稳健（Cobbe 等, 2021）。",
+   "citations": [
+    {
+     "source": "s3",
+     "doi": "10.48550/arxiv.2110.14168",
+     "quote": "State-of-the-art language models can match human performance on many tasks, but they still struggle to robustly perform multi-step mathematical"
+    }
+   ]
+  },
+  {
+   "text": "MATH 数据集的提出说明竞赛级数学解题能力仍显著超出当时计算机的能力边界（Hendrycks 等, 2021）。",
+   "citations": [
+    {
+     "source": "s4",
+     "doi": "10.48550/arxiv.2103.03874",
+     "quote": "Many intellectual endeavors require mathematical problem solving, but this skill remains beyond the capabilities of computers."
+    }
+   ]
+  },
+  {
+   "text": "PoT 将数值推理中的计算与推理解耦，把计算交给程序解释器执行（Chen 等, 2022）。",
+   "citations": [
+    {
+     "source": "s5",
+     "doi": "10.48550/arxiv.2211.12588",
+     "quote": "Recently, there has been significant progress in teaching language models to perform step-by-step reasoning to solve complex numerical reaso"
+    }
+   ]
+  },
+  {
+   "text": "PAL 以生成程序作为推理载体，由运行时执行算术与符号运算（Gao 等, 2022）。",
+   "citations": [
+    {
+     "source": "s6",
+     "doi": "10.48550/arxiv.2211.10435",
+     "quote": "Large language models (LLMs) have recently demonstrated an impressive ability to perform arithmetic and symbolic reasoning tasks, when provi"
+    }
+   ]
+  },
+  {
+   "text": "Toolformer 表明语言模型可在少量监督下自学调用外部工具（Schick 等, 2023）。",
+   "citations": [
+    {
+     "source": "s7",
+     "doi": "10.48550/arxiv.2302.04761",
+     "quote": "Language models (LMs) exhibit remarkable abilities to solve new tasks from just a few examples or textual instructions, especially at scale."
+    }
+   ]
+  },
+  {
+   "text": "Lean 4 以 Lean 自身重实现定理证明器，兼具证明助手与通用编程语言属性（de Moura 与 Ullrich, 2021）。",
+   "citations": [
+    {
+     "source": "s8",
+     "doi": "10.1007/978-3-030-79876-5_37",
+     "quote": "Lean 4 is a reimplementation of the Lean interactive theorem prover (ITP) in Lean itself."
+    }
+   ]
+  },
+  {
+   "text": "LeanDojo 面向 Lean 形式定理证明，提供可检索增强的交互式训练与评测环境（Yang 等, 2023）。",
+   "citations": [
+    {
+     "source": "s9",
+     "doi": "10.48550/arxiv.2306.15626",
+     "quote": "Large language models (LLMs) have shown promise in proving formal theorems using proof assistants such as Lean."
+    }
+   ]
+  },
+  {
+   "text": "Z3 是被广泛使用的 SMT 求解器，为形式验证提供可判定内核（de Moura 与 Bjørner, 2008）。",
+   "citations": [
+    {
+     "source": "s10",
+     "doi": "10.1007/978-3-540-78800-3_24"
+    }
+   ]
+  },
+  {
+   "text": "Logic-LM 通过把自然语言问题转译为符号求解器输入，提升逻辑推理的忠实性（Pan 等, 2023）。",
+   "citations": [
+    {
+     "source": "s11",
+     "doi": "10.18653/v1/2023.findings-emnlp.248",
+     "quote": "Large Language Models (LLMs) have shown human-like reasoning abilities but still struggle with complex logical problems."
+    }
+   ]
+  },
+  {
+   "text": "LLaMA 提供 7B 至 65B 参数规模的开源基础模型系列（Touvron 等, 2023）。",
+   "citations": [
+    {
+     "source": "s12",
+     "doi": "10.48550/arxiv.2302.13971",
+     "quote": "We introduce LLaMA, a collection of foundation language models ranging from 7B to 65B parameters."
+    }
+   ]
+  },
+  {
+   "text": "过程监督（逐步验证）在数学推理上优于仅监督最终答案的结果监督（Lightman 等, 2023）。",
+   "citations": [
+    {
+     "source": "s13",
+     "doi": "10.48550/arxiv.2305.20050",
+     "quote": "In recent years, large language models have greatly improved in their ability to perform complex multi-step reasoning."
+    }
+   ]
+  },
+  {
+   "text": "自动形式化指把自然语言数学自动翻译为形式规范与证明（Wu 等, 2022）。",
+   "citations": [
+    {
+     "source": "s14",
+     "doi": "10.48550/arxiv.2205.12615",
+     "quote": "Autoformalization is the process of automatically translating from natural language mathematics to formal specifications"
+    }
+   ]
+  },
+  {
+   "text": "神经符号人工智能综述系统梳理了学习与推理的融合路线（Marra 等, 2024）。",
+   "citations": [
+    {
+     "source": "s15",
+     "doi": "10.1016/j.artint.2023.104062",
+     "quote": "This survey explores the integration of learning and reasoning in two different fields of artificial intelligence: neuro"
+    }
+   ]
+  },
+  {
+   "text": "在基于 Curry-Howard 对应的编程与证明系统中，命题等式的处理是类型理论的核心设计问题（Altenkirch 等, 2007）。",
+   "citations": [
+    {
+     "source": "s16",
+     "doi": "10.1145/1292597.1292608",
+     "quote": "This paper has something new and positive to say about propositional equality in programming and proof systems based on the Curry-Howard cor"
+    }
+   ]
+  }
+ ]
+}

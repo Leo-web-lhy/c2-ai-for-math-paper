@@ -1,0 +1,605 @@
+% !TEX program = xelatex
+% paper.tex —— C2《AI for Math 论文》
+% 结构依据课程材料《中文论文大纲（AI4Math）》的 9 节要求组织。
+% 编译通道：tectonic（XeLaTeX + ctex）。参考文献由 paper_bibliography.tex 提供，
+% 该文件由 pipeline/build_bib.js 从 references.bib 自动生成（环境约束见 AI日志.md）。
+\documentclass[11pt]{article}
+\usepackage{ctex}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,array}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\geometry{margin=2.4cm}
+\newtheorem{definition}{定义}[section]
+\newtheorem{proposition}{命题}[section]
+\newtheorem{remark}{注记}[section]
+\newcommand{\IR}{\ensuremath{\mathcal{I}}}
+\newcommand{\NL}{\ensuremath{\mathcal{N}}}
+\newcommand{\red}[1]{\ensuremath{\rho(#1)}}
+\title{从自然语言到可验证推理：\\基于语义规约的 AI 数学可靠性框架}
+\author{学号：2023108610260}
+\date{2026 年 9 月}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+大语言模型（LLM）在数学推理上的表现提升，主要来自更强的生成能力与更充分的测试时计算；
+但自然语言推理链本身不具备可验证性，正确性只能靠答案比对间接估计。
+本文提出一个以\textbf{语义规约层}为核心的技术框架，把 AI 数学的可靠性问题分解为
+生成（Generation）、语义规约（Semantic Reduction）、验证（Verification）三层，
+并论证当前系统的失败主要集中于第二层，而非第一层或第三层。
+在方法上，本文给出一套带类型系统、操作语义与约束系统的结构化中间表示（Typed IR），
+以及"自然语言 $\to$ Typed IR $\to$ 形式验证 $\to$ 自然语言渲染"的流水线，
+并用双向一致性（IR $\leftrightarrow$ 自然语言）约束映射的可解释性与可回溯性。
+本文按大纲要求给出可复现的实验设计（GSM8K/MATH，纯 LLM 对照，正确率/可验证率/一致性三指标）
+与分层失败分类法，使"语义规约瓶颈"成为可被证伪的工程命题。
+本文是框架与评估设计类工作：所有结论均为设计层结论，不含实测性能主张。
+
+\textbf{关键词：} AI4Math；语义规约；类型化中间表示；神经符号系统；可验证推理
+\end{abstract}
+
+\section{引言}
+
+\subsection{背景}
+近年来 LLM 的数学能力主要由三条技术路线推动：其一是以思维链（Chain-of-Thought）为代表
+的提示式推理，通过显式中间步骤显著改善多步算术与文字题表现\cite{wei2022cot}；
+其二是采样与搜索层面的扩展，如自洽性投票\cite{wang2022selfconsistency} 与过程级奖励建模
+\cite{lightman2023verify}；其三是工具与程序增强，把推理外化为可执行程序或外部调用
+\cite{chen2022programofthoughts,gao2022pal,schick2023toolformer}。
+这些进展主要由 GSM8K\cite{cobbe2021gsm8k} 与 MATH\cite{hendrycks2021math} 等基准推动，
+而开源权重的普及\cite{touvron2023llama} 使该方向成为可大规模复现的实验场。
+
+\subsection{问题：自然语言推理不可直接验证}
+上述能力提升并未同步带来\textbf{可靠性}提升。根本原因是表示层的不匹配：
+LLM 的推理链是自然语言，而自然语言没有唯一的语义解释，也没有可判定的一致性判据。
+因此工程上只能退化为两种弱验证：其一，比对最终答案（只验证结果，不验证过程，
+无法区分"答案对而推理错"与"推理对"）；其二，对推理链做外层评判（如奖励模型或
+LLM-as-judge），其判据本身仍是概率性的、不可判定的。
+换言之，系统缺少一个可以被机械检查的对象。
+
+\subsection{现有两条路线及其缺口}
+\textbf{路线 A：增强生成。}自洽性采样\cite{wang2022selfconsistency} 通过答案边缘化提高稳定性；
+过程监督\cite{lightman2023verify} 把监督信号从结果移到中间步骤；程序增强\cite{chen2022programofthoughts,gao2022pal}
+把推理外化为可执行代码，工具调用\cite{schick2023toolformer} 进一步引入外部计算。
+这条路线改善的是\textbf{生成分布}，而非\textbf{可验证性}：程序确实是可执行的，
+但"自然语言 $\to$ 程序"这一步翻译的正确性没有任何形式保证，
+执行成功只证明"程序算出了某个值"，不证明"该值与题设同义"。
+
+\textbf{路线 B：事后验证。}形式证明助手提供了黄金标准的检查能力：Lean 4\cite{demoura2021lean4}
+配合检索增强的证明自动化\cite{yang2023leandojo} 可检查证明对象；SMT 求解器\cite{demoura2008z3}
+可判定约束可满足性；神经符号方法\cite{pan2023logiclm,marra2024neurosymbolic} 与自动形式化
+\cite{wu2022autoformalization} 试图把自然语言题目送入形式系统。
+这条路线的缺口同样在边界上：验证器只对\textbf{已形式化的对象}负责。
+若形式化步骤把一个概率题写成确定性约束，验证器仍会返回"通过"，
+此时被验证的是另一个命题——验证结论与原始意图脱钩，且该错误对验证器不可见。
+
+\subsection{核心论点}
+本文的核心论点是：\textbf{AI 数学的可靠性不能仅依赖"最终验证"，必须显式引入并约束中间的语义规约层。}
+"最终验证"的隐含假设是"待验证对象忠实表达了原意"。在人类数学写作中，该假设由作者与
+审稿人共同承担；在 LLM 流水线中它无人承担，因而成为系统误差的主要来源。
+据此，本文把可靠性从"模型能力问题"重新表述为\textbf{接口契约问题}：
+需要为"自然语言 $\leftrightarrow$ 形式对象"之间的映射定义可检查的契约。
+
+\subsection{本文贡献}
+\begin{enumerate}[leftmargin=1.6em,itemsep=2pt]
+\item \textbf{分层分解}：把 AI 数学流水线分解为生成层、语义规约层、验证层，
+给出各层的表示语义与失败模式，并论证失败主要集中于第二层（第 \ref{sec:layers}、\ref{sec:bottleneck} 节）。
+\item \textbf{Typed IR}：提出一套带类型系统、操作语义与约束系统的中间表示，
+使自然语言推理中的隐含假设成为\textbf{显式、可检查、可回溯}的对象（第 \ref{sec:framework} 节）。
+\item \textbf{双向一致性}：把"可解释性/可回溯性"从软性要求转化为可操作约束，
+给出 IR $\to$ 自然语言渲染与自然语言 $\to$ IR 规约的对齐判据（第 \ref{sec:framework} 节）。
+\item \textbf{可复现评估设计}：给出基于 GSM8K\cite{cobbe2021gsm8k} 与 MATH\cite{hendrycks2021math}
+的对照实验设计、三指标定义与分层失败分类法，使"语义规约瓶颈"可被证伪（第 \ref{sec:experiment} 节）。
+\end{enumerate}
+本文是框架与评估设计类工作：第 \ref{sec:experiment} 节给出的是\textbf{实验协议}而非实测结果；
+本文不主张任何未经实验的性能结论，所有设计层论断的适用范围在第 \ref{sec:discussion} 节明确限定。
+
+\section{问题分层模型}
+\label{sec:layers}
+\begin{definition}[三层分解]
+AI 数学流水线可分解为三个功能层：
+\emph{生成层} $G$：从题目 $q$ 产生自然语言推理链 $c$；
+\emph{语义规约层} $R$：把 $c$ 映射为形式对象 $i \in \IR$；
+\emph{验证层} $V$：在形式系统 $F$ 中判定 $i$ 的性质。
+记整体系统为复合映射 $V \circ R \circ G$。
+\end{definition}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=9mm,
+  box/.style={draw, rounded corners, align=center, minimum width=8.6cm,
+              minimum height=9mm, font=\small, inner sep=3pt},
+  ar/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box, fill=blue!7] (l1) {\textbf{第一层：生成} \\ 自然语言推理链 $c$（非类型化、概率性、无固定语义）};
+\node[box, fill=orange!12, below=of l1] (l2) {\textbf{第二层：语义规约} \\ Typed IR：类型系统 $+$ 操作语义 $+$ 约束系统};
+\node[box, fill=green!9, below=of l2] (l3) {\textbf{第三层：验证} \\ 自洽性 / 可推导性 / 约束满足（可判定、可终止）};
+\draw[ar] (l1) -- node[right, font=\scriptsize, xshift=2pt] {$\rho$：规约映射（无全局保证）} (l2);
+\draw[ar] (l2) -- node[right, font=\scriptsize, xshift=2pt] {$\vdash_F$：机械判定} (l3);
+\draw[ar, dashed, red!75!black] (l1.east) to[out=0,in=0, looseness=1.55]
+  node[right, font=\scriptsize, align=left, xshift=3pt] {缺失锚点的\\ "最终验证"} (l3.east);
+\end{tikzpicture}
+\caption{三层分解与语义规约瓶颈。虚线表示跳过第二层的"最终验证"路径：
+它验证的是一个未经契约约束的形式对象，其结论与原意是否同义无法在系统内判定。}
+\label{fig:layers}
+\end{figure}
+
+\subsection{第一层：生成层}
+生成层是 LLM 的原始能力层\cite{wei2022cot,touvron2023llama}，
+其输出是 token 序列，具有三个对可靠性不利的性质：（i）\textbf{概率性}——
+同一输入可产生多个互不相容的推理链，正确性无单调保证；
+（ii）\textbf{非类型化}——自然语言断言不携带类型，量词域、比较基准、单位常被省略；
+（iii）\textbf{无固定语义}——"显然"、"同理"等连接词不构成可检查的推理步。
+因此生成层可评价"合理"，却无法判定"有效"。
+
+\subsection{第二层：语义规约层}
+该层负责把自然语言映射为结构化表示（逻辑公式、程序、证明对象或类型化 IR），
+其理论基础是 Curry--Howard 对应：命题即类型、证明即程序，
+因而"推理是否正确"可转化为"项是否可依类型检查"\cite{altenkirch2007observational}。
+该层是本文关注的核心，其三个固有挑战为：（i）\textbf{语义不稳定}——
+同一句自然语言可对应多个不等价的逻辑式，选择依赖不可见的上下文假设；
+（ii）\textbf{类型不完整}——自然语言句子缺少完整类型标注，映射时需补全，
+而补全的每一处都是一个未经确认的假设；（iii）\textbf{不可逆性}——
+从形式对象回译到自然语言会丢失信息，因此"翻译是否保义"无法通过反译比对完成。
+
+\subsection{第三层：验证层}
+验证层在形式系统内做机械判定，覆盖四类性质：自洽性（无矛盾）、可推导性（结论可由前提导出）、
+事实一致性（与题设及已知事实相符）、约束满足（约束集可满足）\cite{demoura2008z3,demoura2021lean4}。
+本层是整条流水线中\textbf{唯一}具备可判定性与可重复性的环节，
+也正因如此，它的可靠性完全继承自第二层的输入质量：\section{语义规约瓶颈}
+\label{sec:bottleneck}
+本节把"瓶颈在第二层"从一个观察升级为一个可陈述、可证伪的命题。
+
+\begin{definition}[可验证对象与可验证率]
+设形式系统 $F$ 具有判定过程 $\vdash_F$。称 $i \in \IR$ 是\emph{可验证对象}，
+若 $i$ 良类型且 $\vdash_F$ 在 $i$ 上终止并给出确定结论。
+对题目集 $Q$ 与系统 $S = V \circ R \circ G$，定义\emph{可验证率}
+\[
+\mathrm{VR}(S,Q) \;=\; \frac{\bigl|\{\,q \in Q \;:\; \rho(G(q)) \text{ 是可验证对象}\,\}\bigr|}{|Q|}.
+\]
+\end{definition}
+
+\begin{proposition}[幻觉不可检测性]
+\label{prop:undetectable}
+若规约映射 $\rho$ 不是保义单射，即存在推理链 $c_1 \neq c_2$（语义不等价，
+$c_2$ 为幻觉）而 $\rho(c_1) = \rho(c_2)$，
+则任何形如 $V \circ \rho$ 的验证器对 $c_1$ 与 $c_2$ 输出相同结论，
+从而不能在 $c_2$ 上检测出该幻觉。
+\end{proposition}
+\begin{proof}
+验证器只通过 $\rho$ 的取值访问推理链。由假设 $\rho(c_1)=\rho(c_2)$，
+两者给出同一形式对象，故 $V(\rho(c_1)) = V(\rho(c_2))$，输出结论不可区分。
+若 $c_1$ 有效，则该结论为"通过"，于是 $c_2$ 上的幻觉被判为通过，即未被检测。
+\end{proof}
+
+\begin{remark}
+命题 \ref{prop:undetectable} 的含义是：\textbf{该类错误对验证层不可见}。
+因此提升第一层（更强模型、更多采样）与第三层（更强求解器）都不能消除它——
+错误在进入验证层之前就已经被抹平。这正是"瓶颈"一词的技术含义。
+\end{remark}
+
+\subsection{为什么验证必须依赖可计算对象}
+验证层的能力来自形式系统的机械性：判定过程只处理有穷、良类型的语法对象，
+不处理"意图"。因此验证的前提是先把意图固化为对象。
+自然语言推理链不满足这一前提：它没有类型，量词域与单位常被省略，
+指代与省略依赖对话上下文，同一段文字可以对应多个不等价的逻辑式。
+在这种输入上，"验证"只能退化为对最终答案的比对或另一个概率模型的评判，
+二者都不具备判定性。
+
+\subsection{为什么映射不稳定}
+自然语言到形式对象的转换是\textbf{一对多}的，且选择依赖不在文本中的假设。
+例：应用题"某商品先打八折再满减，求实付"中，"打折与满减的先后顺序""满减是否可叠加"
+在同义的自然语言下都可能有不同解释。转换器必须补全这些假设。
+
+\begin{definition}[隐式假设]
+称规约过程中未在原题文本中出现的语义选择为\emph{隐式假设}。
+若隐式假设未被显式记录，则验证结论的适用范围不可界定。
+\end{definition}
+
+\begin{remark}
+幻觉在此获得一个新的解释：它往往不是"算错"，而是\textbf{把某个未经确认的隐式假设
+当成了题设}。答案比对无法区分这两者，因为两者都可能给出同一个数值答案。
+\end{remark}
+
+\subsection{本层的四个失败模式}
+为便于后续实验归因，本文把第二层的失败分四类：
+\textbf{(F1) 语义漂移}——形式对象与原意不等价；
+\textbf{(F2) 类型缺失}——隐含假设未补全或补全错误（定义 3.2）；
+\textbf{(F3) 不可逆损失}——回译时信息丢失，导致人工复核被误导；
+\textbf{(F4) 过度形式化}——为可判定性而牺牲题目本义（如把概率题写成确定性约束）。
+第 \ref{sec:experiment} 节的评估协议为这四类分别定义判据与统计口径，
+使其可被独立计数、可被证伪。
+
+\section{方法框架}
+\label{sec:framework}
+本章给出框架的两个组成部分：结构化中间表示（Typed IR）与
+"生成 $\to$ IR $\to$ 验证 $\to$ 渲染"流水线，以及约束二者对齐的双向一致性条件。
+
+\subsection{结构化中间表示（Typed IR）}
+\begin{definition}[Typed IR]
+Typed IR 是一个五元组 $\IR = (T,\ \Gamma,\ e,\ C,\ G)$：
+$T$ 是类型集合，包含基础类型 $\{Nat, Int, Rat, Real, Bool, Set(\tau), Prop\}$
+与函数类型 $\tau_1 \to \tau_2$；
+$\Gamma$ 是类型上下文，把每个符号映射到类型\textbf{及其来源标注}；
+$e$ 是良类型项；$C$ 是约束集；$G$ 是项之间的依赖图（AST/DAG），支持组合与复用。
+\end{definition}
+
+项与公式由如下文法给出（$x$ 为变量，$n$ 为字面量，$\odot$ 为算术算子）：
+\begin{align*}
+e &::= x \mid n \mid e \odot e \mid f(e_1,\dots,e_k) \mid \mathsf{let}\ x = e\ \mathsf{in}\ e
+      \mid \mathsf{if}\ \varphi\ \mathsf{then}\ e\ \mathsf{else}\ e
+      \mid \textstyle\sum_{i \in I} e_i \mid \textstyle\prod_{i \in I} e_i \mid \lambda x{:}\tau.\ e \\
+\varphi &::= \top \mid \bot \mid e = e \mid e \le e \mid \varphi \wedge \varphi \mid \varphi \vee \varphi
+      \mid \neg \varphi \mid \forall x{:}\tau.\ \varphi \mid \exists x{:}\tau.\ \varphi \\
+\tau &::= Nat \mid Int \mid Rat \mid Real \mid Bool \mid \tau \to \tau \mid Set(\tau) \mid Prop
+\end{align*}
+
+关键设计是\textbf{把隐式假设变成显式约束}：类型规则不接受未满足的前提，
+而是产生需要被确认的约束。
+\begin{align*}
+&\text{(T-Var)}\ \frac{x{:}\tau \in \Gamma}{\Gamma \vdash x : \tau}
+\qquad\qquad
+\text{(T-Div)}\ \frac{\Gamma \vdash a : Real \quad \Gamma \vdash b : Real \quad C \vDash b \neq 0}
+  {\Gamma \vdash a / b : Real} \\
+&\text{(T-Sum)}\ \frac{\forall i \in I.\ \Gamma \vdash e_i : Real \quad I\ \text{有穷}}
+  {\Gamma \vdash \sum_{i \in I} e_i : Real}
+\qquad
+\text{(T-Prob)}\ \frac{\Gamma \vdash \varphi : Prop \quad \Gamma \vdash p : Real \quad C \vDash 0 \le p \le 1}
+  {\Gamma \vdash \mathsf{Pr}[\varphi] = p : Prop}
+\end{align*}
+(T-Div) 说明：自然语言中省略的"分母非零"不再是一个默认共识，而是一条可检查的显式约束；
+(T-Prob) 说明：概率题的语义（样本空间、独立性）被强制显式化，
+从而阻断把概率题误规约为确定性约束的路径（失败模式 F4）。
+约束集 $C$ 不满足时，规约结果\textbf{不是}一个可验证对象，
+\subsection{生成 $\to$ IR $\to$ 验证 $\to$ 渲染流水线}
+\label{subsec:pipeline}
+流水线把自然语言限定为\textbf{接口}，把可验证结构作为\textbf{内核}。五个阶段如下。
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm,
+  st/.style={draw, rounded corners, align=center, font=\scriptsize,
+             text width=2.05cm, minimum height=10mm, inner sep=2pt},
+  ar/.style={-{Latex[length=1.8mm]}, thick},
+  fb/.style={-{Latex[length=1.8mm]}, thick, dashed, blue!60!black}
+]
+\node[st, fill=blue!7]   (s1) {\textbf{S1} 解析\\意图与题设};
+\node[st, fill=orange!12, right=of s1] (s2) {\textbf{S2} 符号化\\类型分配 $\Gamma$};
+\node[st, fill=orange!12, right=of s2] (s3) {\textbf{S3} 约束生成\\$C$ 与假设集 $A$};
+\node[st, fill=green!9,  right=of s3] (s4) {\textbf{S4} 验证\\$\vdash_F$ 判定};
+\node[st, fill=blue!7,   right=of s4] (s5) {\textbf{S5} 渲染\\自然语言回译};
+\draw[ar] (s1) -- (s2);
+\draw[ar] (s2) -- (s3);
+\draw[ar] (s3) -- node[above, font=\tiny] {$C$ 可满足} (s4);
+\draw[ar] (s4) -- (s5);
+\draw[fb] (s5.south) to[out=-90, in=-90, looseness=0.9]
+  node[below, font=\tiny, align=center] {R2/R3 复核：回译 $\to$ 再规约\\（不通过则拒绝输出）} (s3.south);
+\end{tikzpicture}
+\caption{五阶段流水线。虚线为双向一致性复核回路：
+渲染结果必须能够被再次规约回 $\alpha$-等价的 IR，否则流水线拒绝输出，
+而不是输出一个"看起来合理"的自然语言结论。}
+\label{fig:pipeline}
+\end{figure}
+
+\textbf{S1 解析与意图抽取。}把题面切分为题设集合与目标，识别量词域、单位与边界条件。
+本阶段不产生形式对象，只产生\textbf{带定位的自然语言片段}，为后续回溯提供锚点。
+
+\textbf{S2 符号化与类型分配。}为每个实体与量分配类型，构造上下文 $\Gamma$ 与项 $e$。
+类型分配是可检查的：类型错误的项不允许进入下一步。
+
+\textbf{S3 约束生成。}对每条类型规则的前提生成约束（如 (T-Div) 的 $b \neq 0$、
+(T-Prob) 的 $0 \le p \le 1$ 与样本空间声明），同时收集隐式假设集 $A$。
+若 $C$ 不可满足或存在未确认假设，S3 不产生可验证对象，而是产生\textbf{待确认清单}。
+
+\textbf{S4 验证。}在形式系统内判定：可满足性、可推导性、与题设的一致性。
+本阶段是全流程唯一具备判定性的环节。
+
+\textbf{S5 渲染。}把形式对象回译为目标语言的自然语言，并\textbf{显式列出} $A$ 中的假设
+与验证结论的适用范围。
+
+\begin{quote}\ttfamily\small
+算法 1：可审计的规约与验证（单题）\\
+\begin{tabular}{@{}p{0.86\textwidth}@{}}
+输入：题面 $q$；类型规则集 $\mathcal{T}$；判定过程 $\vdash_F$\\
+输出：三元组 $(i, A, v)$ 或 $\mathsf{REJECT}(r)$，$r$ 为拒绝理由\\
+1\ \ $P \leftarrow \mathsf{parse}(q)$ \hfill // 带字符区间定位的片段集\\
+2\ \ $\Gamma, e \leftarrow \mathsf{symbolize}(P)$ \hfill // 类型分配（可失败）\\
+3\ \ $C, A \leftarrow \mathsf{constraints}(\Gamma, e, \mathcal{T})$ \hfill // 约束 + 隐式假设\\
+4\ \ 若 $C$ 不可满足：返回 $\mathsf{REJECT}(\text{"约束冲突"})$\\
+5\ \ 若 $A \neq \varnothing$：请求确认 $A$；未确认项进入 $A_{\text{unconf}}$\\
+6\ \ $i \leftarrow (\Gamma, e, C)$；$v \leftarrow \vdash_F(i)$ \hfill // 唯一可判定环节\\
+7\ \ $q' \leftarrow \mathsf{render}(i, A, v)$；若 $\mathsf{symbolize}(q') \not\equiv_\alpha i$：\\
+8\ \ \hspace{1em}返回 $\mathsf{REJECT}(\text{"双向一致性未通过"})$ \hfill // 见 R2\\
+9\ \ 返回 $(i, A, v)$，且 $v$ 的适用范围限定为「$A$ 全部成立」
+\end{tabular}
+\end{quote}
+
+\subsection{双向一致性}
+\label{subsec:bidir}
+"S可解释、可回溯"若不写成可检查的条件，就只是愿望。本节把它写为三个条件。
+设 $\mathcal{L}$ 为自然语言片段集，$\mathcal{A}$ 为隐式假设集，
+$\mathsf{src} : \mathrm{nodes}(e) \to 2^{\mathcal{L}}$ 为来源标注函数。
+
+\begin{definition}[双向一致性]
+称规约--渲染对 $(R, \mathsf{Render})$ \emph{双向一致}，若同时满足：
+\begin{enumerate}[leftmargin=1.6em,itemsep=1pt]
+\item[\textbf{(R1)}] \textbf{覆盖性}：$\bigcup_{n \in \mathrm{nodes}(e)} \mathsf{src}(n) = P$，
+即每个题设片段至少被一个 IR 节点引用，且每个节点有非空来源（无凭空节点）；
+\item[\textbf{(R2)}] \textbf{忠实性}：$\mathsf{symbolize}(\mathsf{Render}(i)) \equiv_\alpha i$，
+即渲染结果可被再次规约回 $\alpha$-等价的项；
+\item[\textbf{(R3)}] \textbf{假设显式化}：任何影响 $v$ 取值的语义选择都在 $A$ 中，
+且 $A$ 在渲染输出中可见。
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}[瓶颈的条件性消除]
+\label{prop:conditional}
+在检查集内，若 $(R,\mathsf{Render})$ 满足 R1--R3，则命题 \ref{prop:undetectable} 的
+"同源不同义"不可检测情形不再发生：任何 $c_1 \neq c_2$ 的语义差异，
+或体现为某个被显式记录在 $A$ 中的假设差异，或体现为 $\mathsf{src}$ 定位差异，
+二者均为流水线可见对象。
+\end{proposition}
+\begin{proof}[证明思路]
+反设 $\rho(c_1)=\rho(c_2)$ 而 $c_1,c_2$ 语义不等价。两链的差异必落在某条被省略的语义选择上。
+由 R3 该选择必须在 $A$ 中，于是 $\rho$ 的取值相同与 $A$ 不同并存，$A$ 的差异可被比对发现；
+若差异不涉及 $A$，则由 R1 每个节点都有来源，差异必反映为 $\mathsf{src}$ 的不同，
+从而可定位到具体片段并交由人工判定。两种情况都不是"不可检测"。
+\end{proof}
+
+\begin{remark}
+命题 \ref{prop:conditional} 是\textbf{条件性}结论：它把不可检测性从"整条链是否保义"
+（不可判定）缩减为"$A$ 中每条假设是否可接受"（有限、可逐条判定）。
+\end{remark}
+
+\subsection{一个工作实例：同一题面的两条链}
+\label{subsec:example}
+考虑题面
+\[
+q = \text{"把 3 个苹果平均分给 2 个小朋友，每人分到多少？"}
+\]
+它在两套不冲突的数学直觉下产生两条链：
+
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+\item \textbf{链 A（有理数除法）}：S2 把"分给"分配为 $\mathbb{Q}$ 上的除法，
+$e_A = 3/2$，$C_A=\{2 \neq 0\}$，$\vdash_F$ 给出 $v_A = 1.5$ 个。
+\item \textbf{链 B（整数分装）}：S2 把"分给"分配为 $\mathbb{Z}$ 上的带余除法，
+$e_B = 3 \div 2$，$C_B = \varnothing$，$\vdash_F$ 给出 $v_B = 1$ 个（余 1）。
+\end{itemize}
+
+两条链都从 $q$ 出发，都在算术上正确，但 $v_A \neq v_B$。
+差异不在第三层（计算），而在第二层：$S_2^A(e_A)$ 与 $S_2^B(e_B)$
+对同一自然语言片段给出了不同的类型。
+
+在框架下这一分歧是被\emph{记录}的，而不是被\emph{隐藏}的：由 (T-Div)，
+链 B 必须把"结果只取整数个"放入 $A_B$，链 A 必须把"允许分数结果"放入 $A_A$；
+由 R3，二者都必须在渲染输出中显示。于是系统给出的不是一条独断答案，
+而是"答案 $+$ 其成立所依赖的假设"。
+
+\begin{remark}
+本例同时说明为什么不能把该瓶颈简单归因于"模型算错"：
+把 $3/2$ 算成 $1$ 不是计算错误，而是在另一套可辩护的语义选择下算对的。
+面向准确性指标（如答案精确匹配）的评测会把链 B 记为错误，从而\textbf{激励}模型隐藏语义选择，
+这与可审计性目标方向相反（第 \ref{sec:experiment} 节据此把"一致性"单列为指标）。
+\end{remark}
+
+\section{相关工作}
+\label{sec:related}
+\subsection{生成增强与提示方法}
+链式思维提示\cite{wei2022cot} 首次系统性地表明，让模型输出中间步骤可以显著提升多步推理表现；
+自洽性采样\cite{wang2022selfconsistency} 进一步用答案边缘化降低单次采样的随机性；
+模型规模与数据的规模化\cite{touvron2023llama} 则提供了使这类方法可复现的基础模型条件。
+这一路线的贡献是把"推理"变成可被观察的文本序列，但序列本身没有语法约束：
+一个语法上合法、语义上不成立的推导步与一个正确的推导步在形式上不可区分。
+因此它提高了答案的\emph{经验正确率}，却没有提供可机械检查的\emph{正确性判据}。
+
+\subsection{外部化与工具增强}
+程序化推理\cite{chen2022programofthoughts} 与程序辅助语言模型\cite{gao2022pal}
+把中间推理外化为可执行代码，使计算部分获得了解释器的判定；
+工具调用学习\cite{schick2023toolformer} 让模型自行决定何时调用外部接口。
+这一路线在很大程度上解决了\emph{计算}的可靠性问题，但把瓶颈整体位移到了
+"自然语言 $\to$ 程序"这一步：选择哪种数据结构、是否允许浮点、边界条件如何处理。这些选择并不由题面唯一决定，而由翻译时的\emph{隐式假设}决定；一旦该选择未被披露，解释器给出的判定至多说明程序\emph{相对于该选择}是正确的，而不能说明它相对于题面是正确的。于是这条路线把可验证性集中到了第三层，却把误差来源整体推移到了第二层（第 \ref{sec:bottleneck} 节）。
+\subsection{形式化与验证}
+Lean 4\cite{demoura2021lean4} 提供了工业级的依赖类型证明助手，
+LeanDojo\cite{yang2023leandojo} 通过检索与交互把证明自动化落到可复现的工程接口上；
+SMT 求解器 Z3\cite{demoura2008z3} 与逻辑程序化方法 Logic-LM\cite{pan2023logiclm}
+则把自然语言问题译为逻辑或约束形式后交给求解器判定；
+自动形式化\cite{wu2022autoformalization} 直接研究"自然语言陈述 $\to$ 形式语句"这一步。
+这一路线证明了一件关键事实：\emph{只要形式对象已经存在，验证就是可靠的}。
+但它的隐含前提是形式化已经完成，而形式化自身的正确性条件没有被规格化：
+翻译失败、歧义、丢条件被记为模型的错误率，而不是被记为\emph{规格缺陷}。
+本文的贡献正在于把这一未规格化的步骤变成一个有检查条件的中间表示。
+
+\subsection{神经符号与语义规约}
+神经符号综述\cite{marra2024neurosymbolic} 把该领域的工作按"神经组件与符号组件的结合方式"分类，
+并指出多数工作的接口是\emph{非对称}的：神经侧负责生成，符号侧负责过滤，
+返回信号无法回传到语义选择本身。本文把它表述为：中间表示若不能同时被两侧读取，
+"语义规约"就不构成一个可优化的对象。
+在更基础的层面，类型论中的可观察相等\cite{altenkirch2007observational}
+给出了一个方法论范例：一个概念要被检查，就必须被"可观察的规约行为"定义，而不是靠外部约定。
+本文的 R2（渲染结果必须能被再次规约回 $\alpha$-等价的 IR）正是这一原则在流水线上的落实。
+
+\subsection{与本文工作的差异}
+\label{subsec:position}
+表 \ref{tab:position} 给出定位：各路线分别解决了\emph{计算}、\emph{判定}或\emph{证明}的可靠性，
+但都没有把"自然语言到形式对象"这一步当作有规格、有检查条件、有失败码的工程对象。
+本文的目标不是替代这些方法，而是给它们补上前置的语义规约层：
+若第二层未被规格化，第一层的算力与第三层的判定力都会被语义选择的不可见性所限制。
+
+\begin{table}[t]
+\centering
+\small
+\caption{路线定位：各方法提供的可检查对象与未覆盖的瓶颈。}
+\label{tab:position}
+\begin{tabular}{@{}p{2.5cm}p{3.5cm}p{3.4cm}p{4.4cm}@{}}
+\toprule
+路线 & 代表工作 & 提供的可检查对象 & 尚未规格化的环节 \\
+\midrule
+提示增强 & CoT、自洽性采样 & 推理文本序列 & 序列缺乏语义约束，步与步之间无判定 \\
+程序与工具外化 & PoT、PAL、工具调用 & 可执行程序及其输出 & 自然语言到程序的类型/边界选择 \\
+形式化验证 & Lean 4、LeanDojo、SMT & 形式证明、可满足性判定 & 形式化自身是否正确未被规格化 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{应用场景}
+\label{sec:applications}
+\subsection{自动定理证明}
+在自动定理证明中，失败通常只能被笼统归因为"模型能力不足"。
+若把中间表示作为反思对象，失败可以被定位到具体层次：
+是类型分配使目标不可陈述（第二层），还是判定过程在给定预算内未终止（第三层）。
+本文框架的直接用途是把一次失败的\emph{可归因程度}提高：
+把"没做出来"变成"在假设集 $A$ 下不可判定"或"类型分配与题设冲突"，
+从而给后续的检索式证明或人工介入提供明确入口。
+
+\subsection{数学应用题求解}
+应用题的核心困难常不是计算，而是"题目在说什么"。
+链 A/链 B 的情形（\S\ref{subsec:example}）在日常作业中并不罕见：
+系统的产出从"一个答案"变为"答案 $+$ 依赖假设"，
+在批改与自检场景中，后者比前者更有用，因为它把争议从"你对不对"转移到
+"你用的是哪套约定"。这正是框架的可检查对象能被非专家直接消费的地方。
+
+\subsection{AI 数学教育}
+在教育场景中，隐藏语义选择的显式化本身就是教学内容。
+学生常见的困难之一是不知道自己的推导在哪一步引入了额外假设；
+框架的输出把该步骤作为对象展示出来（第 S2 与 S3 阶段的产物），
+使"哪里想当然了"成为一个可指认的对象，而不只是一句评语。
+需要说明：本节的应用讨论均为\emph{设计意图}，
+其教学效果不在本文的评测范围内，明确列为非目标（第 \ref{sec:discussion} 节）。
+
+\section{实验设计}
+\label{sec:experiment}
+本节给出可复现的评测协议、指标定义、消融设置与失败分类。
+本文报告的是协议本身与预注册的预测方向；实测量级需在此协议下由后续工作填充。
+
+\subsection{基准与设置}
+基准选取 GSM8K\cite{cobbe2021gsm8k}（小学算术应用题，答案精确可判定）与
+MATH\cite{hendrycks2021math}（竞赛题，含符号与证明性表述）。
+两基准的差异正好覆盖框架的两个压力点：前者考察类型分配（整数/有理数/余数），
+后者考察约束生成与判定预算。
+公开可复现要求：固定模型版本与解码参数（温度、采样数）、固定检索池、
+公开每条样本的完整中间产物（IR、约束集、假设集、判定结论），
+使第三方可在不重跑生成模型的前提下复算全部指标。
+
+\subsection{指标}
+除答案准确率外，本文定义四个与可审计性直接相关的指标：
+
+\begin{table}[t]
+\centering
+\small
+\caption{指标定义。$Q$ 为题集，$A_q$ 为样本 $q$ 的假设集，
+$\mathsf{Vis}(A_q)$ 表示 $A_q$ 是否在输出中可见。}
+\label{tab:metrics}
+\begin{tabular}{@{}p{2.2cm}p{6.2cm}p{5.4cm}@{}}
+\toprule
+指标 & 定义 & 它想回答的问题 \\
+\midrule
+准确率 $\mathrm{Acc}$ & 答案与标准答案精确匹配的样本占比 & 结果对不对（沿用现有惯例） \\
+可验证率 $\mathrm{Ver}$ &
+存在良类型且判定终止的可验证对象的样本占比 &
+有多少产出是\emph{可检查}的，而非仅"看起来对" \\
+分歧率 $\mathrm{Div}$ &
+多条规约链给出不同答案的样本占比 &
+同一题面下语义选择的不稳定程度 \\
+假设披露率 $\mathrm{AER}$ &
+$A_q \neq \varnothing$ 的样本中 $\mathsf{Vis}(A_q)$ 为真的占比 &
+系统是否\emph{承认}自己的额外假设 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+四个指标不可互相替代。$\mathrm{Acc}$ 高而 $\mathrm{Ver}$ 低意味着答案来自不可审计的路径；
+$\mathrm{Acc}$ 高而 $\mathrm{AER}$ 低意味着系统在正确答案上隐藏了语义选择
+（\S\ref{subsec:example} 的链 A 即属此类：答案正确，但"允许分数"这一约定未被披露）。
+$\mathrm{Div}$ 是框架的直接产物，无中间表示的路线无法测量它。
+
+\subsection{消融与预注册预测}
+消融以关闭单个条件实现：(a) 关闭约束检查（退化为纯提示增强）；(b) 关闭 R2（允许不可回译的渲染）；
+(c) 关闭 R3（允许不披露假设）。据 \S\ref{sec:bottleneck} 的论证，本文预注册如下\emph{可证伪}的方向性预测：
+
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+\item 关闭 (a) 后 $\mathrm{Ver}$ 显著下降，而 $\mathrm{Acc}$ \emph{可能基本不变}
+——若后者成立，则说明现行准确率指标对语义规约的质量不敏感，本文的核心主张获得支持；
+\item 关闭 (c) 后 $\mathrm{AER}$ 降为 $0$ 而 $\mathrm{Div}$ 上升，$\mathrm{Acc}$ 仍可能不变
+——说明披露假设\textbf{不}以牺牲准确率为代价；
+\item 关闭 (b) 后 $\mathrm{Ver}$ 与 $\mathrm{AER}$ 同时下降，且失败集中在 F4 类。
+\end{itemize}
+
+\textbf{反证条件}：若存在某设置使 $\mathrm{Acc}$ 与 $\mathrm{Ver}$ 同步大幅提升，
+且 $\mathrm{AER}$ 在无约束下也天然接近 $1$，则"语义规约是独立瓶颈"的主张被削弱。
+本文把该反证条件写在协议中，而不是留待事后解释。
+
+\subsection{失败分类}
+评测同时记录失败类型，用于区分框架缺陷与实现缺陷：
+\begin{description}[leftmargin=1.8em,itemsep=2pt]
+\item[F1 检查集外差异] 语义差异落在 R1--R3 未覆盖的选择上
+（框架假设的反例，直接决定命题 \ref{prop:conditional} 的适用边界）；
+\item[F2 类型分配错误] S2 给出的类型与题设矛盾；
+\item[F3 约束遗漏] 应生成的约束未生成，导致本应被拒绝的规约通过；
+\item[F4 渲染不可回译] R2 不通过，即渲染结果无法规约回 $\alpha$-等价的 IR；
+\item[F5 实现缺陷] 判定超时、解析异常等与框架无关的工程问题。
+\end{description}
+标注要求：至少两名标注者独立标注子集，报告一致性系数；
+\section{讨论}
+\label{sec:discussion}
+\subsection{局限性}
+\textbf{第一，中间表示的设计复杂度。}本文给出的类型系统与约束集合是面向初等算术与概率的最小可用版本。
+扩展到含集合、集合族、极限与测度的领域，需要新的类型构造子与新的约束族，
+其代价不是线性增长：每引入一个新构造子，都要重新讨论 R1--R3 在该构造子下是否仍然可检查。
+
+\textbf{第二，映射本身的难度并未消失，只是被显式化了。}
+本文的贡献不在于让"自然语言 $\to$ 形式对象"变容易，
+而在于使这一步的失败有位置、有类型、有失败码。
+这带来一个必须承认的代价：在检查集不完备处，系统会输出 $\mathsf{REJECT}$，
+即在原本可能"蒙对"的题上放弃作答。这是可审计性的固有代价，不是实现缺陷。
+
+\textbf{第三，检查集完备性是一个假设。}
+命题 \ref{prop:conditional} 以 R1--R3 在给定检查集内完备为条件，
+F1 类失败正是该假设的反例来源。因此本文主张的是\emph{条件性}结论，
+并为该条件给出了明确的计数器，而不是宣称已消除全部语义歧义。
+
+\textbf{第四，判定预算与终止性。}第三层的可靠性依赖判定过程在预算内终止；
+对超出预算的样本，框架只能报告"未判定"，这与"判定为假"必须严格区分。
+
+\subsection{可扩展方向}
+其一，扩展到一般推理：把类型系统从数值扩展到关系与知识断言，
+使"从自然语言到可验证结构"的接口不限于数学；
+其二，与智能体结合：把假设集 $A$ 作为可协商对象，
+使多个求解器或证明助手在同一 IR 上协作，分歧以 $A$ 的差异形式呈现，
+而不是以答案差异形式呈现——后者在实践中难以归因，前者可以直接比对。
+
+\subsection{非目标与影响声明}
+本文不主张该框架能提升模型的数学能力上限，不主张它替代证明助手或求解器，
+也不主张其教学效果已获实证。它的目标范围严格限定为：
+把数学推理的可审计性从"评审者的经验判断"部分转移为"可机械执行的检查"。
+由于框架会主动拒绝不可规约的输入，将其用于高风险场景时的正确用法是
+把 $\mathsf{REJECT}$ 视为需要人工介入的信号，而不是系统故障。
+
+\section{结论}
+\label{sec:conclusion}
+本文把"AI 数学推理的可靠性"问题分解为三个层次，
+并论证瓶颈位于中间的语义规约层：在自然语言到形式对象这一步，
+正是这种映射在决定一个结论是否具有数学意义，而它长期未被视为可规格的工程对象。
+
+围绕这一诊断，本文提出以带类型中间表示为核心的四件套框架
+（类型系统、操作语义、约束集、可组合图/AST），
+给出"生成 $\to$ IR $\to$ 验证 $\to$ 渲染"的五阶段流水线，
+并把"可解释、可回溯"写成三个可机械检查的条件（R1 覆盖性、R2 忠实性、R3 假设显式化）。
+在此基础上，本文给出一个条件性命题：在检查集内，若 R1--R3 成立，
+则"同源不同义"的不可检测情形被还原为有限、可逐条判定的假设确认问题。
+
+最后，本文给出可复现的实验协议：以 GSM8K 与 MATH 为基准，
+以准确率、可验证率、分歧率、假设披露率为指标，
+以关闭约束检查/R2/R3 作为消融，并把方向性预测与反证条件一并预注册。
+其中最关键的一条预测是：在关闭约束检查后，可验证率显著下降而准确率可能基本不变——
+若该预测成立，则说明现行的准确性评测对语义规约的质量不敏感，
+这正是本文认为该瓶颈值得被单独研究的主要理由。
+
+\input{paper_bibliography.tex}
+\end{document}

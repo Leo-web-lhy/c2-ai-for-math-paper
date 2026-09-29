@@ -1,0 +1,173 @@
+% references.bib — C2《从自然语言到可验证推理：基于语义规约的 AI 数学可靠性框架》
+%
+% 元数据来源与核验方式（可复核）：
+%   1) 记录来自 OpenAlex / Crossref 检索结果（原始池见 pipeline/refs_pool.json，175 条）；
+%   2) 每条主张与引用经 deep-research citations 逐条核验：引用原句须出现在被引来源文本内，
+%      DOI 须格式规范且与被引来源记录一致；无来源可核验时判 weak，绝不补全为 verified。
+%   3) 核验结论：16 条主张全部 supported；14 条 verified，2 条 weak（注册表未返回摘要文本，仅有 DOI 元数据）。
+%   4) 本文件仅写入注册表实际返回的字段。出版信息（卷期、页码、会议全称）未获取，故一律不写，
+%      以避免元数据编造；读者可经 doi 字段自行解析权威出版信息。
+%   5) 作者列表按注册表顺序保留前三位并以 others 截断，未推测补全注册表中被截断的姓名片段。
+@misc{wei2022cot,
+  author = {Jason Wei and Xuezhi Wang and Dale Schuurmans and others},
+  title  = {{Chain-Of-Thought Prompting Elicits Reasoning in Large Language Models}},
+  year   = {2022},
+  doi    = {10.52202/068431-1800},
+  url    = {https://openalex.org/W7133224126},
+  note   = {引用核验：weak}
+}
+
+@misc{wang2022selfconsistency,
+  author        = {Xuezhi Wang and Jason Wei and Dale Schuurmans and others},
+  title         = {{Self-Consistency Improves Chain of Thought Reasoning in Language Models}},
+  year          = {2022},
+  eprint        = {2203.11171},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2203.11171},
+  url           = {https://openalex.org/W4221161695},
+  note          = {引用核验：verified}
+}
+
+@misc{cobbe2021gsm8k,
+  author        = {Karl Cobbe and Vineet Kosaraju and Mohammad Bavarian and others},
+  title         = {{Training Verifiers to Solve Math Word Problems}},
+  year          = {2021},
+  eprint        = {2110.14168},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2110.14168},
+  url           = {https://openalex.org/W3210904070},
+  note          = {引用核验：verified}
+}
+
+@misc{hendrycks2021math,
+  author        = {Dan Hendrycks and Collin Burns and Saurav Kadavath and others},
+  title         = {{Measuring Mathematical Problem Solving With the MATH Dataset}},
+  year          = {2021},
+  eprint        = {2103.03874},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2103.03874},
+  url           = {https://openalex.org/W3134642945},
+  note          = {引用核验：verified}
+}
+
+@misc{chen2022programofthoughts,
+  author        = {Wenhu Chen and Xueguang Ma and Xinyi Wang and others},
+  title         = {{Program of Thoughts Prompting: Disentangling Computation from Reasoning for Numerical Reasoning Tasks}},
+  year          = {2022},
+  eprint        = {2211.12588},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2211.12588},
+  url           = {https://openalex.org/W4309953112},
+  note          = {引用核验：verified}
+}
+
+@misc{gao2022pal,
+  author        = {Luyu Gao and Aman Madaan and Shuyan Zhou and others},
+  title         = {{PAL: Program-aided Language Models}},
+  year          = {2022},
+  eprint        = {2211.10435},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2211.10435},
+  url           = {https://openalex.org/W4309591663},
+  note          = {引用核验：verified}
+}
+
+@misc{schick2023toolformer,
+  author        = {Timo Schick and Jane Dwivedi-Yu and Roberto Dessì and others},
+  title         = {{Toolformer: Language Models Can Teach Themselves to Use Tools}},
+  year          = {2023},
+  eprint        = {2302.04761},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2302.04761},
+  url           = {https://openalex.org/W4320165837},
+  note          = {引用核验：verified}
+}
+
+@misc{demoura2021lean4,
+  author = {Leonardo de Moura and Sebastian Ullrich},
+  title  = {{The Lean 4 Theorem Prover and Programming Language}},
+  year   = {2021},
+  doi    = {10.1007/978-3-030-79876-5_37},
+  url    = {https://openalex.org/W3178506813},
+  note   = {引用核验：verified}
+}
+
+@misc{yang2023leandojo,
+  author        = {Kaiyu Yang and Aidan Swope and Alex Gu and others},
+  title         = {{LeanDojo: Theorem Proving with Retrieval-Augmented Language Models}},
+  year          = {2023},
+  eprint        = {2306.15626},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2306.15626},
+  url           = {https://openalex.org/W4382498654},
+  note          = {引用核验：verified}
+}
+
+@misc{demoura2008z3,
+  author = {Leonardo de Moura and Nikolaj Bjørner},
+  title  = {{Z3: An Efficient SMT Solver}},
+  year   = {2008},
+  doi    = {10.1007/978-3-540-78800-3_24},
+  url    = {https://openalex.org/W1480909796},
+  note   = {引用核验：weak}
+}
+
+@misc{pan2023logiclm,
+  author = {Liangming Pan and Alon Albalak and Xinyi Wang and others},
+  title  = {{Logic-LM: Empowering Large Language Models with Symbolic Solvers for Faithful Logical Reasoning}},
+  year   = {2023},
+  doi    = {10.18653/v1/2023.findings-emnlp.248},
+  url    = {https://openalex.org/W4389519818},
+  note   = {引用核验：verified}
+}
+
+@misc{touvron2023llama,
+  author        = {Hugo Touvron and Thibaut Lavril and Gautier Izacard and others},
+  title         = {{LLaMA: Open and Efficient Foundation Language Models}},
+  year          = {2023},
+  eprint        = {2302.13971},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2302.13971},
+  url           = {https://openalex.org/W4322718191},
+  note          = {引用核验：verified}
+}
+
+@misc{lightman2023verify,
+  author        = {Hunter Lightman and Vineet Kosaraju and Yura Burda and others},
+  title         = {{Let's Verify Step by Step}},
+  year          = {2023},
+  eprint        = {2305.20050},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2305.20050},
+  url           = {https://openalex.org/W4379089709},
+  note          = {引用核验：verified}
+}
+
+@misc{wu2022autoformalization,
+  author        = {Yuhuai Wu and Albert Qiaochu Jiang and Wenda Li and others},
+  title         = {{Autoformalization with Large Language Models}},
+  year          = {2022},
+  eprint        = {2205.12615},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arxiv.2205.12615},
+  url           = {https://openalex.org/W4282045675},
+  note          = {引用核验：verified}
+}
+
+@misc{marra2024neurosymbolic,
+  author = {Giuseppe Marra and Sebastijan Dumančić and Robin Manhaeve and others},
+  title  = {{From statistical relational to neurosymbolic artificial intelligence: A survey}},
+  year   = {2024},
+  doi    = {10.1016/j.artint.2023.104062},
+  url    = {https://openalex.org/W4391493576},
+  note   = {引用核验：verified}
+}
+
+@misc{altenkirch2007observational,
+  author = {Thorsten Altenkirch and Conor Thomas McBride and Wouter Swierstra},
+  title  = {{Observational equality, now!}},
+  year   = {2007},
+  doi    = {10.1145/1292597.1292608},
+  url    = {https://openalex.org/W2133629640},
+  note   = {引用核验：verified}
+}
